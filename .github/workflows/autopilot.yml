@@ -22,15 +22,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ${{ inputs.region }}
-          role-to-assume: arn:aws:iam::${{ inputs.account-id }}:role/SSMAutomationRole
-          role-session-name: GitHubActionsSession
+          audience: sts.amazonaws.com
+          aws-region: ${{ github.event.inputs.region }}
+          role-to-assume: arn:aws:iam::${{ github.event.inputs.account-id }}:role/SSMAutomationRole
 
       - name: Trigger SSM Automation
         run: |
