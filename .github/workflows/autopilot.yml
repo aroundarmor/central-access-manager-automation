@@ -17,7 +17,6 @@ on:
           - us-east-1
           - ap-southeast-1
 
-        
 permissions:
   contents: read
   id-token: write
@@ -25,16 +24,17 @@ permissions:
 jobs:
   execute-ssm:
     runs-on: ubuntu-latest
-    
-      - name: Install AWS CLI
-        run: |
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install
-          
+    steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip curl
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -47,4 +47,4 @@ jobs:
         run: |
           aws ssm start-automation-execution \
             --document-name "StopEC2InstanceWithAccountId" \
-            --parameters "InstanceId=${{ inputs.instance-id }},AccountId=${{ inputs.account-id }}"
+            --parameters "InstanceId=${{ github.event.inputs.instance-id }},AccountId=${{ github.event.inputs.account-id }}"
