@@ -51,3 +51,6 @@ Resources:
                   - 'ssm:DescribeAutomationExecutions'
                   - 'ssm:DescribeAutomationStepExecutions'
                 Resource: '*'
+              - Effect: Allow
+                Action: 'iam:PassRole'
+                Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/SSMAutomationRole' 
