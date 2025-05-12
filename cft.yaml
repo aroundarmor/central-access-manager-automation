@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CloudFormation template to create an IAM Role for SSM Automation accessible via GitHub Actions using OIDC.
+Description: CloudFormation template to create an IAM Role and OIDC Provider for GitHub Actions, used for SSM Automation.
 
 Parameters:
   GitHubOrganization:
@@ -10,6 +10,15 @@ Parameters:
     Type: String
 
 Resources:
+  GitHubOIDCProvider:
+    Type: 'AWS::IAM::OIDCProvider'
+    Properties:
+      Url: 'https://token.actions.githubusercontent.com'
+      ClientIdList:
+        - 'sts.amazonaws.com'
+      ThumbprintList:
+        - '6938fd4d98bab03faadb97b34396831e3780aea1'  # The thumbprint for GitHub's OIDC provider
+
   SSMAutomationRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -19,7 +28,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Federated: !Sub 'arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com'
+              Federated: !Ref GitHubOIDCProvider
             Action: 'sts:AssumeRoleWithWebIdentity'
             Condition:
               StringEquals:
