@@ -1,0 +1,23 @@
+---
+schemaVersion: '0.3'
+description: >-
+  An Automation document to stop an Amazon EC2 instance in a specified account using a predefined role.
+assumeRole: 'arn:aws:iam::{{ AccountId }}:role/SSMAutomationRole'
+parameters:
+  InstanceId:
+    type: String
+    description: '(Required) The ID of the EC2 instance to stop.'
+  AccountId:
+    type: String
+    description: '(Required) AWS account ID where the EC2 instance is located.'
+
+mainSteps:
+  - name: stopInstance
+    action: 'aws:executeAwsApi'
+    timeoutSeconds: 600
+    onFailure: Abort
+    inputs:
+      Service: 'ec2'
+      Api: 'StopInstances'
+      InstanceIds: 
+        - '{{ InstanceId }}'
