@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create an IAM Role for SSM Automation accessible via GitHub Actions using OIDC.
+
+Parameters:
+  GitHubOrganization:
+    Description: The GitHub organization or user name.
+    Type: String
+  GitHubRepository:
+    Description: The name of the GitHub repository.
+    Type: String
+
+Resources:
+  SSMAutomationRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: 'SSMAutomationRole'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub 'arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com'
+            Action: 'sts:AssumeRoleWithWebIdentity'
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrganization}/${GitHubRepository}:ref:refs/heads/main
+      Policies:
+        - PolicyName: 'SSMAutomationPolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ec2:StopInstances'
+                  - 'ec2:DescribeInstances'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'ssm:ExecuteAutomation'
+                  - 'ssm:StartAutomationExecution'
+                  - 'ssm:GetAutomationExecution'
+                  - 'ssm:DescribeAutomationExecutions'
+                  - 'ssm:DescribeAutomationStepExecutions'
+                Resource: '*'
