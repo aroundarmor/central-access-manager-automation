@@ -17,6 +17,11 @@ on:
           - us-east-1
           - ap-southeast-1
 
+        
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   execute-ssm:
     runs-on: ubuntu-latest
