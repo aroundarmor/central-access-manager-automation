@@ -46,5 +46,5 @@ jobs:
       - name: Trigger SSM Automation
         run: |
           aws ssm start-automation-execution \
-            --document-name "StopEC2InstanceWithAccountId" \
+            --document-name "NewRunbook" \
             --parameters "InstanceId=${{ github.event.inputs.instance-id }},AccountId=${{ github.event.inputs.account-id }}"
