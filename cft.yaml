@@ -33,6 +33,10 @@ Resources:
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrganization}/${GitHubRepository}:ref:refs/heads/main
+          - Effect: Allow
+            Principal:
+              Service: 'ssm.amazonaws.com'
+            Action: 'sts:AssumeRole'
       Policies:
         - PolicyName: 'SSMAutomationPolicy'
           PolicyDocument:
