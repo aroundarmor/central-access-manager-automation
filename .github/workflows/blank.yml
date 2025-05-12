@@ -1,0 +1,39 @@
+name: Execute SSM Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      account-id:
+        description: 'The AWS account ID where the EC2 instance is located.'
+        required: true
+      instance-id:
+        description: 'The ID of the EC2 instance to stop.'
+        required: true
+      region:
+        description: 'The AWS region where the instance is located.'
+        required: true
+        type: choice
+        options:
+          - us-east-1
+          - ap-southeast-1
+
+jobs:
+  execute-ssm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ${{ inputs.region }}
+          role-to-assume: arn:aws:iam::${{ inputs.account-id }}:role/SSMAutomationRole
+          role-session-name: GitHubActionsSession
+
+      - name: Trigger SSM Automation
+        run: |
+          aws ssm start-automation-execution \
+            --document-name "StopEC2InstanceWithAccountId" \
+            --parameters "InstanceId=${{ inputs.instance-id }},AccountId=${{ inputs.account-id }}"
