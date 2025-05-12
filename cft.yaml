@@ -49,6 +49,14 @@ Resources:
                 Resource: '*'
               - Effect: Allow
                 Action:
+                  - 'ssm:CreateDocument'
+                  - 'ssm:UpdateDocument'
+                  - 'ssm:GetDocument'
+                  - 'ssm:DeleteDocument'  # In case removal is needed
+                  - 'ssm:ListDocuments'
+                  - 'ssm:DescribeDocument'
+                  - 'ssm:SendCommand'
+                  - 'ssm:GetCommandInvocation'
                   - 'ssm:ExecuteAutomation'
                   - 'ssm:StartAutomationExecution'
                   - 'ssm:GetAutomationExecution'
