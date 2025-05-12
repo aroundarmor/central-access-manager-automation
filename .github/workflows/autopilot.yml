@@ -1,4 +1,4 @@
-name: Execute SSM Automation
+name: Manage and Execute SSM Automation
 
 on:
   workflow_dispatch:
@@ -16,25 +16,31 @@ on:
         options:
           - us-east-1
           - ap-southeast-1
+      document-name:
+        description: 'Name of the SSM document to trigger after updates.'
+        required: true
+      document-names:
+        description: 'Comma-separated list of SSM document names to update or create.'
+        required: true
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
-  execute-ssm:
+  manage-and-execute-ssm:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # - name: Install AWS CLI
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y unzip curl
-      #     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-      #     unzip awscliv2.zip
-      #     sudo ./aws/install
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip curl
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -43,8 +49,32 @@ jobs:
           aws-region: ${{ github.event.inputs.region }}
           role-to-assume: arn:aws:iam::${{ github.event.inputs.account-id }}:role/SSMAutomationRole
 
+      - name: Process SSM Documents
+        env:
+          DOCUMENT_NAMES: ${{ github.event.inputs.document-names }}
+        run: |
+          IFS=',' read -ra DOC_ARRAY <<< "$DOCUMENT_NAMES"
+          for DOCUMENT_NAME in "${DOC_ARRAY[@]}"; do
+            echo "Processing document: $DOCUMENT_NAME"
+            if aws ssm get-document --name "$DOCUMENT_NAME" --output text >/dev/null 2>&1; then
+              echo "Updating document $DOCUMENT_NAME"
+              aws ssm update-document \
+                --name "$DOCUMENT_NAME" \
+                --document-version '$LATEST' \
+                --document-format YAML \
+                --content file://automation/$DOCUMENT_NAME.yaml
+            else
+              echo "Creating document $DOCUMENT_NAME"
+              aws ssm create-document \
+                --name "$DOCUMENT_NAME" \
+                --document-type "Automation" \
+                --document-format YAML \
+                --content file://automation/$DOCUMENT_NAME.yaml
+            fi
+          done
+
       - name: Trigger SSM Automation
         run: |
           aws ssm start-automation-execution \
-            --document-name "NewRunbook" \
+            --document-name "${{ github.event.inputs.document-name }}" \
             --parameters "InstanceId=${{ github.event.inputs.instance-id }},AccountId=${{ github.event.inputs.account-id }}"
